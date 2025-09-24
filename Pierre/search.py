@@ -82,7 +82,7 @@ def tinyMazeSearch(problem:SearchProblem)->List[Direction]:
     return  [s, s, w, s, w, w, s, w]
 
 
-def depthFirstSearch(problem: SearchProblem) -> List[Direction]:
+def depthFirstSearch(problem:SearchProblem)->List[Direction]:
     """
     Search the deepest nodes in the search tree first.
 
@@ -101,34 +101,34 @@ def depthFirstSearch(problem: SearchProblem) -> List[Direction]:
     fringe = util.Stack()
     fringe.push((state, []))
     while not fringe.isEmpty():
-        state, actions = fringe.pop()
+        state, Direction = fringe.pop()
         if state in visited_states:
             continue
         visited_states.add(state)
         if problem.isGoalState(state):
-            return actions
+            return Direction
         for successor, action, _ in problem.getSuccessors(state):
             if successor not in visited_states:
-                fringe.push((successor, actions + [action]))
+                fringe.push((successor, Direction + [action]))
     return []
 
 
-def breadthFirstSearch(problem: SearchProblem) -> List[Direction]:
+def breadthFirstSearch(problem:SearchProblem)->List[Direction]:
     """Search the shallowest nodes in the search tree first."""
     state = problem.getStartState()
     visited_states = set()
     fringe = util.Queue()
     fringe.push((state, []))
     while not fringe.isEmpty():
-        state, actions = fringe.pop()
+        state, Direction = fringe.pop()
         if state in visited_states:
             continue
         visited_states.add(state)
         if problem.isGoalState(state):
-            return actions
+            return Direction
         for successor, action, _ in problem.getSuccessors(state):
             if successor not in visited_states:
-                fringe.push((successor, actions + [action]))
+                fringe.push((successor, Direction + [action]))
     return []
 
 
@@ -139,43 +139,45 @@ def uniformCostSearch(problem:SearchProblem)->List[Direction]:
     fringe = util.PriorityQueue()
     fringe.push((state, [], 0), 0)
     while not fringe.isEmpty():
-        state, actions, cost = fringe.pop()
+        state, Direction, cost = fringe.pop()
         if state in visited_states:
             continue
         visited_states.add(state)
         if problem.isGoalState(state):
-            return actions
+            return Direction
         for successor, action, step_cost in problem.getSuccessors(state):
             if successor not in visited_states:
                 new_cost = cost + step_cost
-                fringe.push((successor, actions + [action], new_cost), new_cost)
+                fringe.push((successor, Direction + [action], new_cost),
+                            new_cost)
     return []
 
-def nullHeuristic(state:GameState, problem:SearchProblem=None)->List[Direction]:
+def nullHeuristic(state:GameState,problem:SearchProblem=None)->List[Direction]:
     """
     A heuristic function estimates the cost from the current state to the nearest
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
     return 0
 
-def aStarSearch(problem:SearchProblem, heuristic=nullHeuristic)->List[Direction]:
+def aStarSearch(problem:SearchProblem,heuristic=nullHeuristic)->List[Direction]:
     """Search the node that has the lowest combined cost and heuristic first."""
     state = problem.getStartState()
     visited_states = set()
     fringe = util.PriorityQueue()
     fringe.push((state, [], 0), heuristic(state, problem))
     while not fringe.isEmpty():
-        state, actions, cost = fringe.pop()
+        state, Direction, cost = fringe.pop()
         if state in visited_states:
             continue
         visited_states.add(state)
         if problem.isGoalState(state):
-            return actions
+            return Direction
         for successor, action, step_cost in problem.getSuccessors(state):
             if successor not in visited_states:
                 new_cost = cost + step_cost
                 priority = new_cost + heuristic(successor, problem)
-                fringe.push((successor, actions + [action], new_cost), priority)
+                fringe.push((successor, Direction + [action], new_cost), 
+                            priority)
     return []
 
 
