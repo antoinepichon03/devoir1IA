@@ -365,12 +365,12 @@ def cornersHeuristic(state, problem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-
-    '''
-        INSÉREZ VOTRE SOLUTION À LA QUESTION 6 ICI
-    '''
-    
-    return 0
+    position, visitedCorners = state
+    unvisitedCorners = [corner for corner in corners if corner not in visitedCorners]
+    if not unvisitedCorners:
+        return 0
+    heuristic = max(util.manhattanDistance(position, corner) for corner in unvisitedCorners)
+    return heuristic
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -463,11 +463,17 @@ def foodHeuristic(state, problem: FoodSearchProblem):
     problem.heuristicInfo['wallCount']
     """
     position, foodGrid = state
+    foodList = foodGrid.asList()
 
-    '''
-        INSÉREZ VOTRE SOLUTION À LA QUESTION 7 ICI
-    '''
+    if not foodList:
+        return 0
 
+    # BFS pour avoir vraie distance (pas juste Manhattan)
+    def mazeDistance(p1, p2):
+        from search import breadthFirstSearch 
+        prob = PositionSearchProblem(problem.startingGameState, start=p1, goal=p2, warn=False)
+        return len(breadthFirstSearch(prob))
 
-    return 0
-
+    # Distance au morceau de nourriture le plus éloigné
+    distances = [mazeDistance(position, food) for food in foodList]
+    return max(distances)
