@@ -384,15 +384,15 @@ def cornersHeuristic(state, problem):
         util.manhattanDistance(position, corner) for corner in unvisitedCorners
     )
 
-    # Maximum distance between remaining unvisited corners
+    # Maximum distance between unvisited corners
     # If only one univisted corner remains, distance is 0
     if len(unvisitedCorners) == 1:
         max_dist_between_corners = 0
     else:
         max_dist_between_corners = max(
-            util.manhattanDistance(c1, c2)
-            for i, c1 in enumerate(unvisitedCorners)
-            for c2 in unvisitedCorners[i + 1:]
+            util.manhattanDistance(corner1, corner2)
+            for i, corner1 in enumerate(unvisitedCorners)
+            for corner2 in unvisitedCorners[i + 1:]
         )
 
     # Heuristic = sum of two distances
@@ -462,6 +462,52 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
 
+
+MAZEDISTANCECACHE = {}
+
+
+def mazeDistance(position_1, position_2, problem):
+    """
+    Compute the maze distance between two positions.
+
+    This function uses the Breadth-First Search (BFS) algorithm.
+
+    Args:
+        position_1 (tuple): coordinates of the first position.
+        position_2 (tuple): coordinates of the second position.
+        problem (SearchProblem): search problem instance containing the maze.
+
+    Returns:
+        int: number of steps in the shortest path between the two positions.
+    """
+    prob = PositionSearchProblem(problem.startingGameState,
+                                 start=position_1, goal=position_2,
+                                 warn=False)
+    return len(search.breadthFirstSearch(prob))
+
+
+def mazeDistanceCache(position_1, position_2, problem):
+    """
+    Return the cached maze distance between two positions if available,
+    otherwise compute it and store it in the cache.
+
+    This function avoids recalculating maze distances for the same pair
+    of positions by storing the results in a global cache dictionary.
+
+    Args:
+        position_1 (tuple): coordinates of the first position.
+        position_2 (tuple): coordinates of the second position.
+        problem (SearchProblem): search problem instance containing the maze.
+
+    Returns:
+        int: number of steps in the shortest path between the two positions.
+    """
+    key = tuple(sorted([position_1, position_2]))
+    if key not in MAZEDISTANCECACHE:
+        MAZEDISTANCECACHE[key] = mazeDistance(position_1, position_2, problem)
+    return MAZEDISTANCECACHE[key]
+
+
 def foodHeuristic(state, problem: FoodSearchProblem):
     """
     Your heuristic for the FoodSearchProblem goes here.
@@ -490,18 +536,34 @@ def foodHeuristic(state, problem: FoodSearchProblem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    position, foodGrid = state
+    position, foodGrid = state  # Pacman's position
+    # and food coordinates
+
+    # List of remaining food
     foodList = foodGrid.asList()
 
+    # If all food has been eaten, heuristic is 0
     if not foodList:
         return 0
 
-    # BFS pour avoir vraie distance (pas juste Manhattan)
-    def mazeDistance(p1, p2):
-        from search import breadthFirstSearch 
-        prob = PositionSearchProblem(problem.startingGameState, start=p1, goal=p2, warn=False)
-        return len(breadthFirstSearch(prob))
+    # Minimum Manhattan distance to the nearest remaing food
+    min_dist_to_food = min(
+        util.manhattanDistance(position, food) for food in foodList
+    )
 
-    # Distance au morceau de nourriture le plus éloigné
-    distances = [mazeDistance(position, food) for food in foodList]
-    return max(distances)
+    # Maximum maze distance between remaining foods
+    # If only one food remains, distance is 0
+    if len(foodList) == 1:
+        max_dist_between_foods = 0
+    else:
+        max_dist_between_foods = max(
+            # See the functions above
+            mazeDistanceCache(c1, c2, problem)
+            for i, c1 in enumerate(foodList)
+            for c2 in foodList[i + 1:]
+        )
+
+    # Heuristic = sum of two distances
+    heuristic = min_dist_to_food + max_dist_between_foods
+
+    return heuristic
